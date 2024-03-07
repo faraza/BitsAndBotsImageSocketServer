@@ -4,9 +4,10 @@
   "description": "",
   "main": "dist/app.js",
   "scripts": {
-    "start": "node dist/app.js",
+    "build": "tsc --build",
     "dev": "tsc-watch --onSuccess \"nodemon dist/app.js\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsc && node dist/app.js"
+
   },
   "keywords": [],
   "author": "",
