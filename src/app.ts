@@ -1,45 +1,74 @@
 import WebSocket, { WebSocketServer } from 'ws';
-import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
+import {db} from './firestoreSetup';
 
-// Define a type for our client object
-interface Client {
-  ws: WebSocket;
-  roomCode: string | null;
-}
-
-// Creating a new WebSocket server
 const wss = new WebSocketServer({ port: (process.env.PORT || 8080) });
 
-// This will store clients with their roomCode and id
-let clients: Record<string, Client> = {};
 
-// This function will send a message to all connected clients
-function broadcastMessage(): void {
-  Object.keys(clients).forEach(clientID => {
-    const client = clients[clientID].ws;
-    if (client.readyState === WebSocket.OPEN) {
-      const message = `Your room code is: ${clients[clientID].roomCode}`;
-      client.send(message);
-    }
-  });
+interface Client{
+  UUID: string;
+  RoomCode: string;
+  websocket: WebSocket;
 }
 
-// Set interval for broadcasting messages every 10 seconds
-setInterval(broadcastMessage, 10000);
+const rooms = new Map<string, Set<Client>>();
+const firestoreSubscriptions = new Map<string, () => void>();
 
-// Define what happens when a WebSocket connection is established
-wss.on('connection', function connection(ws: WebSocket) {
+wss.on('connection', function connection(ws: WebSocket) {  
+  let client: Client | null = null;
 
-
-  ws.on('message', function incoming(message: string) {
-
-    ws.send(`Room code received: ${message}`);
-
+  ws.on('message', async function incoming(message: string) {                  
+    const data = JSON.parse(message);
+    if (!data.UUID || !data.RoomCode){
+      console.error('Invalid message received: ', data);
+      return;
+    }
+    client = {
+      UUID: data.UUID,
+      RoomCode: data.RoomCode,
+      websocket: ws
+    }
+    
+    if(!rooms.has(client.RoomCode)){
+      rooms.set(client.RoomCode, new Set<Client>());
+      const unsubscribe = db.collection('rooms').doc(client.RoomCode).onSnapshot((doc) => {        
+        const roomData = doc.data();
+        //TODO: Convert doc to gameState format
+        
+        rooms.get(client.RoomCode)?.forEach((client) => {
+          client.websocket.send(JSON.stringify(roomData));
+        })
+      }, (error) => {
+        console.error('Error fetching room data: ', error);
+      })
+      
+      firestoreSubscriptions.set(client.RoomCode, unsubscribe);      
+    }
+    else{
+      try {
+        const roomDoc = await db.collection('rooms').doc(client.RoomCode).get();
+        const roomData = roomDoc.data(); 
+        // TODO: Convert doc to gameState format if necessary
+        client.websocket.send(JSON.stringify(roomData));
+      } catch (error) {
+        console.error('Error sending current room state: ', error);
+      }
+    }
+    
+    rooms.get(client.RoomCode).add(client);
   });
-
-  // Define what happens when a client connection is closed
-  ws.on('close', function close() {
-    //TODO      
+  
+  ws.on('close', function close() {        
+    if (!client) return;
+    if(!rooms.has(client.RoomCode)) return;
+    
+    rooms.get(client.RoomCode)?.delete(client);
+    if (rooms.get(client.RoomCode)!.size === 0){
+      rooms.delete(client.RoomCode);
+      const unsubscribe = firestoreSubscriptions.get(client.RoomCode);
+      if(unsubscribe){
+        unsubscribe();
+      }
+    }
   });
 });
 
