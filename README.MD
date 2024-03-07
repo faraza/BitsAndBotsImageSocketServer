@@ -21,4 +21,4 @@ Test it locally with `docker run -p 8080:8080 [image name]`
 
 
 Then
-`gcloud deploy --image [image name]`
+`gcloud run deploy --image [image name]`
