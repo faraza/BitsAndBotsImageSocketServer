@@ -8,7 +8,7 @@ interface Client {
 }
 
 // Creating a new WebSocket server
-const wss = new WebSocketServer({ port: (process.env.PORT || 8080)});
+const wss = new WebSocketServer({ port: (process.env.PORT || 8080) });
 
 // This will store clients with their roomCode and id
 let clients: Record<string, Client> = {};
@@ -29,27 +29,18 @@ setInterval(broadcastMessage, 10000);
 
 // Define what happens when a WebSocket connection is established
 wss.on('connection', function connection(ws: WebSocket) {
-  const id = uuidv4(); // Assign a unique ID to the connection
-  clients[id] = { ws, roomCode: null }; // Add the connection to our list of clients
 
-  console.log(`Client has connected: ${id}`);
 
-  // Define what happens when a message is received from a client
   ws.on('message', function incoming(message: string) {
-    console.log(`received from ${id}: ${message}`);
-    
-    // The first message from the client is expected to be their roomCode
-    if (clients[id].roomCode === null) {
-      clients[id].roomCode = message;
-      ws.send(`Room code received: ${message}`);
-    }
+
+    ws.send(`Room code received: ${message}`);
+
   });
 
   // Define what happens when a client connection is closed
   ws.on('close', function close() {
-    console.log(`Client disconnected: ${id}`);
-    delete clients[id]; // Remove the client from our list
+    //TODO      
   });
 });
 
-console.log('WebSocket server started on port ' + (process.env.PORT || 8080) );
+console.log('WebSocket server started on port ' + (process.env.PORT || 8080));
