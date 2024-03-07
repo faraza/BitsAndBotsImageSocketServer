@@ -19,6 +19,17 @@ Find the docker image with
 Test it locally with `docker run -p 8080:8080 [image name]`
 -p opens up the ports for the local system
 
+Then create an artifact repository in Google Cloud for this. You can do this from the console.
 
-Then
-`gcloud run deploy --image [image name]`
+Then upload the docker image to the artifact:
+`gcloud builds submit --region=us-central1 --tag us-central1-docker.pkg.dev/[project name]/[repository name]/[desired name for you image]:[tag]`
+E.g.
+`gcloud builds submit --region=us-central1 --tag us-central1-docker.pkg.dev/bitsandbots/bits-and-bots-socket/socket-image:latest`
+
+Finally, deploy to Google Cloud Run. You can also do this from Google Cloud Console. Find the image in the artifact repository.
+
+# To Test live
+Run ws cat against the cloud run service 
+`wscat -c wss://[application path]`
+e.g.
+`wscat -c wss://socket-image-lkjcclx3ma-uc.a.run.app`    
