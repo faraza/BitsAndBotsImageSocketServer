@@ -1,9 +1,12 @@
-import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+// import { initializeApp } from "firebase-admin/app";
+// import { getFirestore } from "firebase-admin/firestore";
+// import {firebase} from 'firebase/ap'
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 
 const firebaseConfig = {
-    apiKey: 'AIzaSyD6-aU_uME6OioiQdJZx22F4LItcxUiKW8',
+    apiKey: "AIzaSyD6-aU_uME6OioiQdJZx22F4LItcxUiKW8",
     authDomain: "bitsandbots.firebaseapp.com",
     projectId: "bitsandbots",
     storageBucket: "bitsandbots.appspot.com",
@@ -13,3 +16,4 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+console.log("DB created")
