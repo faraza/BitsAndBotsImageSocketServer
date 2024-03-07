@@ -14,7 +14,7 @@ Build a docker image
 (the tag be whatever but it's good to have a descriptive tag)
 
 Find the docker image with
-`docker image` and identify the image name
+`docker images` and identify the image name
 
 Test it locally with `docker run -p 8080:8080 [image name]`
 -p opens up the ports for the local system
