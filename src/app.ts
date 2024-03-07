@@ -8,7 +8,7 @@ interface Client {
 }
 
 // Creating a new WebSocket server
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: (process.env.PORT || 8080)});
 
 // This will store clients with their roomCode and id
 let clients: Record<string, Client> = {};
@@ -52,4 +52,4 @@ wss.on('connection', function connection(ws: WebSocket) {
   });
 });
 
-console.log('WebSocket server started on port 8080');
+console.log('WebSocket server started on port ' + (process.env.PORT || 8080) );
