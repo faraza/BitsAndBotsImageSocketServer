@@ -1,7 +1,7 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { db } from './firestoreSetup';
 import { onSnapshot, doc, getDoc } from "firebase/firestore";
-
+import {GameState } from './commonTypes';
 
 
 const wss = new WebSocketServer({ port: (process.env.PORT || 8080) });
@@ -20,9 +20,9 @@ wss.on('connection', function connection(ws: WebSocket) {
 
   console.log("New connection made")
   ws.on('message', async function incoming(message: string) {
-    try {
-      console.log("Handsake message received: ", message)
+    try {      
       const data = JSON.parse(message);
+      console.log('Handshake message received: ', data);
       if (!data.UUID || !data.RoomCode) {
         console.error('Invalid message received: ', data);
         return;
@@ -37,10 +37,11 @@ wss.on('connection', function connection(ws: WebSocket) {
         rooms.set(client.RoomCode, new Set<Client>());
         const roomRef = doc(db, 'rooms', client.RoomCode);
         const unsubscribe = onSnapshot(roomRef, (doc) => {
-          const roomData = doc.data();
+          const roomData = doc.data() as GameState;
+
+
           console.log("Sending room update for room ", client.RoomCode)
-          //TODO: Confirm that uuid is in the room before responding
-          //TODO: Convert doc to gameState format if necessary
+          //TODO: Confirm that uuid is in the room before responding          
           rooms.get(client.RoomCode)?.forEach((client) => {
             client.websocket.send(JSON.stringify(roomData));
           })
@@ -53,8 +54,9 @@ wss.on('connection', function connection(ws: WebSocket) {
       else {
         const roomRef = doc(db, 'rooms', client.RoomCode);
         const roomDoc = await getDoc(roomRef);
-        const roomData = roomDoc.data();
-        // TODO: Convert doc to gameState format if necessary
+        const roomData = roomDoc.data() as GameState;
+        
+        // TODO: Confirm client uuid is in the room before responding
         client.websocket.send(JSON.stringify(roomData));
       }
 

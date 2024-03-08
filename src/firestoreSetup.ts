@@ -1,6 +1,3 @@
-// import { initializeApp } from "firebase-admin/app";
-// import { getFirestore } from "firebase-admin/firestore";
-// import {firebase} from 'firebase/ap'
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
@@ -14,6 +11,6 @@ const firebaseConfig = {
     appId: "1:889167914862:web:8decea2efcb8e69d68c37f",
     measurementId: "G-F9WE4J599Q"
 };
+
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-console.log("DB created")
