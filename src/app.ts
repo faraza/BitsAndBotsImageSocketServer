@@ -1,7 +1,7 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { db } from './firestoreSetup';
 import { onSnapshot, doc, getDoc } from "firebase/firestore";
-import {GameState } from './commonTypes';
+import { GameState } from './commonTypes';
 
 
 const wss = new WebSocketServer({ port: (process.env.PORT || 8080) });
@@ -20,7 +20,7 @@ wss.on('connection', function connection(ws: WebSocket) {
 
   console.log("New connection made")
   ws.on('message', async function incoming(message: string) {
-    try {      
+    try {
       const data = JSON.parse(message);
       console.log('Handshake message received: ', data);
       if (!data.UUID || !data.RoomCode) {
@@ -41,7 +41,18 @@ wss.on('connection', function connection(ws: WebSocket) {
 
 
           console.log("Sending room update for room ", client.RoomCode)
-          //TODO: Confirm that uuid is in the room before responding          
+          let uuidFound = false
+          roomData.users.forEach((user) => {
+            if (user.uuid === client?.UUID) {
+              uuidFound = true
+            }
+          })
+          if (!uuidFound) {
+            console.error("UUID not found in room ", client.RoomCode)
+            ws.close()
+            return
+          }
+
           rooms.get(client.RoomCode)?.forEach((client) => {
             client.websocket.send(JSON.stringify(roomData));
           })
@@ -55,8 +66,18 @@ wss.on('connection', function connection(ws: WebSocket) {
         const roomRef = doc(db, 'rooms', client.RoomCode);
         const roomDoc = await getDoc(roomRef);
         const roomData = roomDoc.data() as GameState;
-        
-        // TODO: Confirm client uuid is in the room before responding
+        let uuidFound = false
+        roomData.users.forEach((user) => {
+          if (user.uuid === client?.UUID) {
+            uuidFound = true
+          }
+        })
+        if (!uuidFound) {
+          console.error("UUID not found in room ", client.RoomCode)
+          ws.close()
+          return
+        }
+
         client.websocket.send(JSON.stringify(roomData));
       }
 
@@ -81,7 +102,7 @@ wss.on('connection', function connection(ws: WebSocket) {
         console.log("All clients disconnected. Unsubscribing from room ", client.RoomCode)
         unsubscribe();
       }
-      else{
+      else {
         console.error("No unsubscribe function found for room ", client.RoomCode)
       }
     }
