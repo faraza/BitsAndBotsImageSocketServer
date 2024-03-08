@@ -18,8 +18,10 @@ const firestoreSubscriptions = new Map<string, () => void>();
 wss.on('connection', function connection(ws: WebSocket) {
   let client: Client | null = null;
 
+  console.log("New connection made")
   ws.on('message', async function incoming(message: string) {
     try {
+      console.log("Handsake message received: ", message)
       const data = JSON.parse(message);
       if (!data.UUID || !data.RoomCode) {
         console.error('Invalid message received: ', data);
@@ -36,7 +38,9 @@ wss.on('connection', function connection(ws: WebSocket) {
         const roomRef = doc(db, 'rooms', client.RoomCode);
         const unsubscribe = onSnapshot(roomRef, (doc) => {
           const roomData = doc.data();
-          // TODO: Convert doc to gameState format if necessary
+          console.log("Sending room update for room ", client.RoomCode)
+          //TODO: Confirm that uuid is in the room before responding
+          //TODO: Convert doc to gameState format if necessary
           rooms.get(client.RoomCode)?.forEach((client) => {
             client.websocket.send(JSON.stringify(roomData));
           })
@@ -65,12 +69,18 @@ wss.on('connection', function connection(ws: WebSocket) {
     if (!client) return;
     if (!rooms.has(client.RoomCode)) return;
 
+    console.log(`Client ${client.UUID} disconnected from room ${client.RoomCode}`)
+
     rooms.get(client.RoomCode)?.delete(client);
     if (rooms.get(client.RoomCode)!.size === 0) {
       rooms.delete(client.RoomCode);
       const unsubscribe = firestoreSubscriptions.get(client.RoomCode);
       if (unsubscribe) {
+        console.log("All clients disconnected. Unsubscribing from room ", client.RoomCode)
         unsubscribe();
+      }
+      else{
+        console.error("No unsubscribe function found for room ", client.RoomCode)
       }
     }
   });
