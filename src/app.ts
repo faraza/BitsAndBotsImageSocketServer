@@ -18,11 +18,11 @@ const firestoreSubscriptions = new Map<string, () => void>();
 wss.on('connection', function connection(ws: WebSocket) {
   let client: Client | null = null;
 
-  console.log("New connection made")
+  console.info("New connection made")
   ws.on('message', async function incoming(message: string) {
     try {
       const data = JSON.parse(message);
-      console.log('Handshake message received: ', data);
+      console.info('Handshake message received: ', data);
       if (!data.UUID || !data.RoomCode) {
         console.error('Invalid message received: ', data);
         return;
@@ -40,18 +40,7 @@ wss.on('connection', function connection(ws: WebSocket) {
           const roomData = doc.data() as GameState;
 
 
-          console.log("Sending room update for room ", client.RoomCode)
-          let uuidFound = false
-          roomData.users.forEach((user) => {
-            if (user.uuid === client?.UUID) {
-              uuidFound = true
-            }
-          })
-          if (!uuidFound) {
-            console.error("UUID not found in room ", client.RoomCode)
-            ws.close()
-            return
-          }
+          console.info("Sending room update for room ", client.RoomCode)          
 
           rooms.get(client.RoomCode)?.forEach((client) => {
             client.websocket.send(JSON.stringify(roomData));
@@ -92,14 +81,14 @@ wss.on('connection', function connection(ws: WebSocket) {
     if (!client) return;
     if (!rooms.has(client.RoomCode)) return;
 
-    console.log(`Client ${client.UUID} disconnected from room ${client.RoomCode}`)
+    console.info(`Client ${client.UUID} disconnected from room ${client.RoomCode}`)
 
     rooms.get(client.RoomCode)?.delete(client);
     if (rooms.get(client.RoomCode)!.size === 0) {
       rooms.delete(client.RoomCode);
       const unsubscribe = firestoreSubscriptions.get(client.RoomCode);
       if (unsubscribe) {
-        console.log("All clients disconnected. Unsubscribing from room ", client.RoomCode)
+        console.info("All clients disconnected. Unsubscribing from room ", client.RoomCode)
         unsubscribe();
       }
       else {
@@ -109,4 +98,4 @@ wss.on('connection', function connection(ws: WebSocket) {
   });
 });
 
-console.log('WebSocket server started on port ' + (process.env.PORT || 8080));
+console.info('WebSocket server started on port ' + (process.env.PORT || 8080));
