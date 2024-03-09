@@ -55,18 +55,7 @@ wss.on('connection', function connection(ws: WebSocket) {
         const roomRef = doc(db, 'rooms', client.RoomCode);
         const roomDoc = await getDoc(roomRef);
         const roomData = roomDoc.data() as GameState;
-        let uuidFound = false
-        roomData.users.forEach((user) => {
-          if (user.uuid === client?.UUID) {
-            uuidFound = true
-          }
-        })
-        if (!uuidFound) {
-          console.error("UUID not found in room ", client.RoomCode)
-          ws.close()
-          return
-        }
-
+        
         client.websocket.send(JSON.stringify(roomData));
       }
 

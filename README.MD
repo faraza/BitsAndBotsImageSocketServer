@@ -2,6 +2,7 @@
 `npm i`
 `npm run dev`
 
+Make sure to point the frontend app to this websocket address
 
 # Test locally
 install wscat globally `npm i -g wscat`
